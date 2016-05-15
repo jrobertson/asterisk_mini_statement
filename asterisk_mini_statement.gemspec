@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'asterisk_mini_statement'
-  s.version = '0.1.1'
+  s.version = '0.1.2'
   s.summary = 'Project under development to output a mini statement of recent 
   telephone calls from the Asterisk Call Detail Records (cdr-csv/Master.csv) file.'
   s.authors = ['James Robertson']
