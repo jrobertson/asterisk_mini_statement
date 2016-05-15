@@ -41,7 +41,8 @@ class AsteriskMiniStatement
 
     a2 = a.select do |x|
       date = Date.parse(x[:start])
-      date >= sdate and date <= edate and x[:disposition] == 'ANSWERED'
+      date >= sdate and date <= edate and \
+          x[:disposition] == 'ANSWERED' and x[:lastapp] == 'Dial'
     end
 
     a3 = a2.group_by {|x| Date.parse(x[:start]) }
