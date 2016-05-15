@@ -7,9 +7,20 @@ require 'csv'
 require 'polyrex'
 require 'subunit'
 
-class AsteriskMiniStatement
+module DateEnhanced
+  
+  refine Fixnum do
+    def ordinalize()
+      self.to_s + ( (10...20).include?(self) ? 'th' : 
+                %w{ th st nd rd th th th th th th }[self % 10] )
+    end      
+  end
+end
 
-  attr_reader :to_xml
+class AsteriskMiniStatement
+  using DateEnhanced
+  
+  attr_reader :to_xml, :to_px, :to_s
 
   def initialize(cdr_file='/var/log/asterisk/cdr-csv/Master.csv', 
                   startdate: (Date.today - 8).strftime("%d-%b-%Y"),
@@ -64,16 +75,48 @@ class AsteriskMiniStatement
             val > 0 ? r << (val.to_s + label) : r
           end.take 2
 
-          create.item(time: x[:start], telno: telno, io: io, dur: a.join(' ') )
+          time =  x[:start][/\d{2}:\d{2}/]
+          create.item(time: time, telno: telno, io: io, dur: a.join(' ') )
         end
 
       end
 
     end
-
+    
+    @to_px = px
     @to_xml = px.to_xml pretty: true
+    
+    title = 'Telephone mini-statement'
+
+    summary = "
+#{title}
+#{'=' * title.length}
+
+telno: #{px.summary.telno}
+Period: #{px.summary.period}
+
+Breakdown:
+
+Date/time  Telephone    duration
+=========  ===========  ========"
+
+    records = px.records.inject('') do |r, day|
+      date = Date.parse(day.date)
+      r << "\n" + date.strftime("%A #{date.day.ordinalize} %B %Y") + "\n\n"
+
+      day.records.inject(r) do |r2, x|
+
+        r2 << (x.io == 'in' ? '>' : '<')
+        r2 << Time.parse(x.time).strftime(" %l:%M%P: ")
+        r2 << x.telno.ljust(13)
+        r2 << x.dur.rjust(8) + "\n"
+      end
+
+      r << "\n" + '-' * 32 + "\n"
+    end
+
+    @to_s = [summary,records].join("\n")        
 
   end
-
+  
 end
-
