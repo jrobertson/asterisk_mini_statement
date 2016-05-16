@@ -27,11 +27,9 @@ class AsteriskMiniStatement
                     enddate: (Date.today - 1).strftime("%d-%b-%Y"),
                  telno: 'unknown', outgoing_regex: /SIP\/(\d+)@/)
 
-    sdate = Date.parse startdate
-    edate = Date.parse enddate
+    sdate,  edate = [startdate, enddate].map {|x| Date.parse x}
+    s = File.read cdr_file    
     
-    s = File.read cdr_file
-
     headings = %i(accountcode src dst dcontet clid channel dstchannel
            lastapp lastdata start answer end duration billsec disposition
                                                                amaflags astid)
@@ -85,7 +83,7 @@ class AsteriskMiniStatement
     
     title = 'Telephone mini-statement'
 
-    summary = "
+    s = "
 #{title}
 #{'=' * title.length}
 
@@ -95,24 +93,25 @@ Period: #{px.summary.period}
 Breakdown:
 
 Date/time  Telephone    duration
-=========  ===========  ========"
+=========  ===========  ========
+"
 
-    records = px.records.inject('') do |r, day|
+    px.records.inject(s) do |r, day|
       
       date = Date.parse(day.date)
       r << "\n" + date.strftime("%A #{date.day.ordinalize} %B %Y") + "\n\n"
 
       day.records.inject(r) do |r2, x|
 
-        r2 << (x.io == 'in' ? '>' : '<')
-        r2 << Time.parse(x.time).strftime(" %l:%M%P: ")
-        r2 << x.telno.ljust(13) + x.dur.rjust(8) + "\n"
+        r2 << (x.io == 'in' ? '>' : '<') + \
+          Time.parse(x.time).strftime(" %l:%M%P: ") + \
+          x.telno.ljust(13) + x.dur.rjust(8) + "\n"
       end
 
       r << "\n" + '-' * 32 + "\n"
     end
 
-    @to_s = [summary,records].join("\n")        
+    @to_s = s        
 
   end
   
