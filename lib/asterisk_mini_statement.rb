@@ -39,8 +39,7 @@ class AsteriskMiniStatement
 
     lines.select! do |x|
       date = Date.parse(x[:start])
-      date >= sdate and date <= edate and \
-          x[:disposition] == 'ANSWERED' and x[:lastapp] == 'Dial'
+      date >= sdate and date <= edate and  x[:lastapp] == 'Dial'
     end
 
     days = lines.group_by {|x| Date.parse(x[:start]) }
@@ -48,8 +47,9 @@ class AsteriskMiniStatement
     px = Polyrex.new('calls[telno, period]/day[date]/item[time, telno,' + 
                                                                    ' io, dur]')
     px.summary.telno = telno    
-    px.summary.period = "%s - %s" % [sdate.strftime("%d/%m/%Y"), 
-                                     edate.strftime("%d/%m/%Y")]
+    px.summary.period = "%s - %s" % [sdate, edate].\
+                                        map{|x| x.strftime("%d/%m/%Y") }
+                                     
     
     days.each do |day, items|
 
@@ -61,7 +61,7 @@ class AsteriskMiniStatement
 
           io, telno = outgoing ? ['out', outgoing] : 
                                         ['in', x[:clid][/"([^"]+)/,1]]
-          
+
           raw_a = Subunit.new(units={minutes:60, hours:60}, 
                                     seconds: x[:duration].to_i).to_a
 
