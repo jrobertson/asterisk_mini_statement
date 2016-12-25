@@ -9,7 +9,7 @@ require 'subunit'
 
 module DateEnhanced
   
-  refine Fixnum do
+  refine Integer do
     def ordinalize()
       self.to_s + ( (10...20).include?(self) ? 'th' : 
                 %w{ th st nd rd th th th th th th }[self % 10] )
